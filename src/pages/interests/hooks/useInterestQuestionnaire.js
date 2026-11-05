@@ -1,39 +1,54 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { careerPaths } from "../../careers/services/careerCatalog.js";
-import { questionnaireComplete } from "../../careers/services/careerMatching.js";
 import { useNaqlah } from "../../../shared/context/NaqlahContext.jsx";
+
+const questions = careerPaths.flatMap((path) => path.questions);
+
+const isAnswered = (value) =>
+  Number.isInteger(value) && value >= 0 && value <= 5;
 
 export default function useInterestQuestionnaire() {
   const { state, patch } = useNaqlah();
   const [missing, setMissing] = useState([]);
   const navigate = useNavigate();
+
   const setAnswer = (id, value) => {
     patch((previous) => ({
       interests: { ...previous.interests, [id]: value },
       interestSubmitted: false,
     }));
-    setMissing((previous) => previous.filter((item) => item !== id));
+
+    setMissing((previous) =>
+      previous.filter((item) => item !== id),
+    );
   };
+
   const submit = () => {
-    if (!questionnaireComplete(state.interests)) {
-      const ids = careerPaths
-        .filter((path) => !Number.isInteger(state.interests[path.id]))
-        .map((path) => path.id);
+    const ids = questions
+      .filter((question) => !isAnswered(state.interests?.[question.id]))
+      .map((question) => question.id);
+
+    if (ids.length > 0) {
       setMissing(ids);
       return ids[0];
     }
+
+    setMissing([]);
     patch({ pathMode: "interest", interestSubmitted: true });
     navigate("/careers");
+
     return null;
   };
+
   return {
-    interests: state.interests,
+    interests: state.interests ?? {},
     setAnswer,
     submit,
     missing,
-    answered: careerPaths.filter((path) =>
-      Number.isInteger(state.interests[path.id]),
+    answered: questions.filter((question) =>
+      isAnswered(state.interests?.[question.id]),
     ).length,
   };
 }

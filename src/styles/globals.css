@@ -2692,6 +2692,17 @@ small,
   .interests-question {
     padding: 20px 16px;
   }
+  .question-example summary {
+  list-style: none;
+}
+
+.question-example summary::-webkit-details-marker {
+  display: none;
+}
+
+.question-example summary::marker {
+  content: "";
+}
   .detail-heading {
     align-items: flex-start;
   }
