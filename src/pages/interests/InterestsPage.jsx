@@ -1,3 +1,4 @@
+
 import { useRef } from "react";
 import { Alert, Progress, Radio } from "antd";
 import Button from "../../shared/components/Button.jsx";
@@ -5,6 +6,8 @@ import Stepper from "../../shared/components/Stepper.jsx";
 import Notice from "../../shared/components/Notice.jsx";
 import { careerPaths } from "../careers/services/careerCatalog.js";
 import useInterestQuestionnaire from "./hooks/useInterestQuestionnaire.js";
+
+const questions = careerPaths.flatMap((career) => career.questions);
 
 export default function InterestsPage() {
   const { interests, setAnswer, submit, missing, answered } =
@@ -21,7 +24,7 @@ export default function InterestsPage() {
           لم تحدد مجالًا بعد؟ لنستكشف اهتماماتك.
         </div>
         <h1>أي الأنشطة أقرب إليك؟</h1>
-        <p>أكمل الأسئلة السبعة لعرض المسارات. لا توجد إجابة صحيحة أو خاطئة.</p>
+        <p>أكمل الأسئلة الـ14 لعرض المسارات. لا توجد إجابة صحيحة أو خاطئة.</p>
       </div>
       <form
         onSubmit={(event) => {
@@ -41,18 +44,18 @@ export default function InterestsPage() {
         <div className="survey-progress">
           <div className="spread">
             <strong>استبيان الاهتمامات</strong>
-            <span>{answered} من 7 أسئلة مجابة</span>
+            <span>{answered} من 14 أسئلة مجابة</span>
           </div>
           <Progress
-            percent={Math.round((answered / 7) * 100)}
+            percent={Math.round((answered / 14) * 100)}
             showInfo={false}
             strokeColor="var(--purple)"
           />
         </div>
         <Notice icon="heart" className="interest-notice">
-          قيّم اهتمامك من 1 إلى 5. كل سؤال يتطلب إجابة؛ «لا أفهم هذا النشاط»
-          إجابة مسموحة وتُستبعد من حساب التطابق. البنود المعروضة توضيحية
-          للنموذج.
+        قيّم اهتمامك بكل نشاط من 1 إلى 5 (1 = اهتمام منخفض، 5 = اهتمام مرتفع).
+       يجب الإجابة عن جميع الأسئلة. إذا لم تفهم نشاطًا، اختر «لا أفهم هذا
+       النشاط»، ولن تدخل هذه الإجابة في حساب نسبة اهتمامك بالمسار.
         </Notice>
         {missing.length > 0 && (
           <Alert
@@ -62,32 +65,63 @@ export default function InterestsPage() {
             title={`أجب عن جميع الأسئلة قبل عرض النتائج. تبقى ${missing.length} أسئلة.`}
           />
         )}
-        {careerPaths.map((career, index) => (
+        {questions.map((question, index) => (
           <section
-            key={career.id}
-            className={`interests-question ${missing.includes(career.id) ? "question-error" : ""}`}
+            key={question.id}
+            className={`interests-question ${missing.includes(question.id) ? "question-error" : ""}`}
             ref={(element) => {
-              refs.current[career.id] = element;
+              refs.current[question.id] = element;
             }}
           >
-            <h3 id={`question-${career.id}`}>
-              <span className="question-n">0{index + 1}</span>
-              {career.activity}
+            <h3 id={`question-${question.id}`}>
+              <span className="question-n">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              {question.text}
             </h3>
+
+<details className="question-example">
+  <summary
+    style={{
+      cursor: "pointer",
+      color: "var(--purple)",
+      fontWeight: 600,
+      listStyle: "none",
+    }}
+  >
+    💡 عرض مثال من الواقع
+  </summary>
+
+  <p style={{ marginTop: 10, lineHeight: 1.9 }}>
+    {question.example}
+  </p>
+</details>
+
+{missing.includes(question.id) && (
+  <p
+    style={{
+      color: "#dc2626",
+      fontSize: "13px",
+      marginBottom: "12px",
+    }}
+  >
+    يرجى الإجابة على هذا السؤال قبل عرض النتائج.
+  </p>
+)}
             <Radio.Group
               className="survey-radios"
-              aria-labelledby={`question-${career.id}`}
+              aria-labelledby={`question-${question.id}`}
               aria-required="true"
-              name={`interest-${career.id}`}
-              value={interests[career.id]}
-              onChange={(event) => setAnswer(career.id, event.target.value)}
+              name={`interest-${question.id}`}
+              value={interests[question.id]}
+              onChange={(event) => setAnswer(question.id, event.target.value)}
             >
               <div className="ratings">
                 {[1, 2, 3, 4, 5].map((value) => (
                   <Radio
                     key={value}
                     value={value}
-                    className={`rating ${interests[career.id] === value ? "selected" : ""}`}
+                    className={`rating ${interests[question.id] === value ? "selected" : ""}`}
                   >
                     {value}
                   </Radio>
